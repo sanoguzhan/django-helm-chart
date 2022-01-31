@@ -88,3 +88,9 @@ celery:
     command: ''
     replicaCount: 1
     strategy: Recreate
+  worker:
+    componentName: celery-worker
+    command: ''
+    replicaCount: 1
+    strategy: RollingUpdate
+  
