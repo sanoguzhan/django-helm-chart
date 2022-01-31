@@ -93,4 +93,20 @@ celery:
     command: ''
     replicaCount: 1
     strategy: RollingUpdate
-  
+  flower:
+    componentName: celery-flower
+    command: ''
+    replicaCount: 1
+    strategy: Recreate   
+    service:
+      type: ClusterIP
+      port: 5555
+    ingress:
+      enabled: true
+      annotations: {}
+      hosts:
+        - host: ''
+          paths:
+            - path: / 
+              pathType: Prefix
+
