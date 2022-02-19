@@ -83,24 +83,29 @@ affinity: {}
 
 
 celery:
+# Beat Settings
   beat:
     componentName: celery-beat
     command: ''
     replicaCount: 1
     strategy: Recreate
+# Worker Settings  
   worker:
     componentName: celery-worker
     command: ''
     replicaCount: 1
     strategy: RollingUpdate
+# Flower Settings
   flower:
     componentName: celery-flower
     command: ''
     replicaCount: 1
-    strategy: Recreate   
+    strategy: RollingUpdate   
     service:
       type: ClusterIP
-      port: 5555
+      port: 
+        number: 5555
+        name: flower
     ingress:
       enabled: true
       annotations: {}
@@ -109,4 +114,4 @@ celery:
           paths:
             - path: / 
               pathType: Prefix
-
+      tls: []  
