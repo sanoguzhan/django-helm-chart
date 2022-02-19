@@ -8,6 +8,7 @@ spec:
   {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
   {{- end }}
+  revisionHistoryLimit: {{ .Values.revisionHistoryLimit }}
   selector:
     matchLabels:
       {{- include "django.selectorLabels" . | nindent 6 }}
@@ -27,6 +28,41 @@ spec:
       serviceAccountName: {{ include "django.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
+
+
+      initContainers:
+        - name: {{ .Values.init.migrations.name | quote }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["/bin/sh"]
+            args:
+              - -c
+              - >-
+                  {{ .Values.init.migrations.command }}
+          envFrom:
+            - secretRef:
+                name: env-secrets
+            - configMapRef:
+                name: env-configmap
+
+        - name: {{ .Values.init.staticfiles.name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: IfNotPresent
+          command: ["/bin/sh"]
+          args:
+              - -c
+              - >-
+                  {{ .Values.init.staticfiles.command }}
+          envFrom:
+            - secretRef:
+                name: env-secrets
+            - configMapRef:
+                name: env-configmap
+
+          volumeMounts:
+            - name: shared
+              mountPath: app/staticfiles
+
       containers:
         - name: {{ .Chart.Name }}
           securityContext:

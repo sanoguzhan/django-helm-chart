@@ -3,6 +3,7 @@
 # Declare variables to be passed into your templates.
 
 replicaCount: 1
+revisionHistoryLimit: 2
 
 image:
   repository: nginx
@@ -82,6 +83,14 @@ tolerations: []
 
 affinity: {}
 
+init:
+  migrations:
+    name: Migrations
+    command:  "python3 manage.py migrate"
+  staticfiles:
+    name: "Collect Static Files"
+    command: "python3 manage.py collectstatic --noinput"
+  
 #Django Static files and Media data folders
 data:
   staticfiles: ""
