@@ -58,31 +58,56 @@ spec:
                 name: env-secrets
             - configMapRef:
                 name: env-configmap
-
           volumeMounts:
             - name: shared
-              mountPath: app/staticfiles
+              mountPath: {{ .Values.data.staticfiles }}
 
       containers:
         - name: {{ .Chart.Name }}
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          imagePullPolicy: IfNotPresent
           ports:
-            - name: http
-              containerPort: 80
+            - containerPort: 80
               protocol: TCP
+          {{- if .Values.probes.liveness.enabled }}
           livenessProbe:
             httpGet:
-              path: /
-              port: http
+              path: {{ .liveness.path }}
+              port: {{ .Values.image.containerPort }}
+          {{- end }}
+          {{- if .Values.probes.readiness.enabled }}
           readinessProbe:
             httpGet:
-              path: /
-              port: http
+              path: {{ .readiness.path }}
+              port: {{ .Values.image.containerPort }}
+          {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+
+        - name: {{ printf "%s-%s" .Chart.Name "proxy" }}
+          image:  "{{ .Values.proxy.repository }}:{{ .Values.image.tag }}"
+          ports:
+            - name: http
+              containerPort: {{ .Values.proxy.containerPort }}
+              protocol: TCP
+              
+          volumeMounts:
+            - name: caddy-config
+              mountPath: /etc/caddy/Caddyfile
+              subPath: Caddyfile
+            - name: shared
+              mountPath: {{ .Values.data.staticfiles }}
+            - name: shared
+              mountPath: {{ .Values.data.data_media }}
+      volumes:
+        - name: caddy-config
+          configMap:
+            name: caddy-config
+        - name: shared
+          emptyDir: {}
+
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

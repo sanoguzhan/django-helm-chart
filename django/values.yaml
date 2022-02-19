@@ -98,7 +98,18 @@ data:
 
 #Caddy Settings
 proxy:
+  repository: caddy
+  pullPolicy: IfNotPresent
+  tag: "2.1.1-alpine" 
   containerPort: 80
+
+probe:
+  liveness:
+    enabled: true
+    path: /
+  readiness:
+    enabled: true
+    path: /
 
 
 celery:
