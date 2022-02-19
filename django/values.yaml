@@ -96,6 +96,11 @@ data:
   staticfiles: ""
   data_media: ""
 
+envConfigs: {}
+
+#Base64 encoded data
+envSecrets: {}
+
 #Caddy Settings
 proxy:
   repository: caddy

@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: env-configmap
+data:
+{{-  with .Values.envConfigs }}
+    {{ toYaml . | indent 4 }}
+{{- end }}
