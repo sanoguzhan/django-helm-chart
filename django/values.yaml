@@ -9,6 +9,7 @@ image:
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
   tag: ""
+  containerPort: 8080
 
 imagePullSecrets: []
 nameOverride: ""
@@ -80,6 +81,15 @@ nodeSelector: {}
 tolerations: []
 
 affinity: {}
+
+#Django Static files and Media data folders
+data:
+  staticfiles: ""
+  data_media: ""
+
+#Caddy Settings
+proxy:
+  containerPort: 80
 
 
 celery:

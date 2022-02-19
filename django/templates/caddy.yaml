@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: caddy-config
+data:
+  Caddyfile: |
+    :{{ .Values.proxy.containerPort }}
+        route /static/* {
+            header Access-Control-Allow-Origin *
+            header Access-Control-Allow-Headers *
+            header Access-Control-Allow-Methods *
+            uri strip_prefix /static
+            root * {{ .Values.data.staticfiles }}
+            file_server
+        }
+       route /data_media/* {
+          header Access-Control-Allow-Origin *
+          header Access-Control-Allow-Headers *
+          header Access-Control-Allow-Methods *
+          uri strip_prefix /data_media
+          root * {{ .Values.data.data_media }}
+          file_server
+        }
+
+    reverse_proxy :{{ .Values.image.containerPort }}
