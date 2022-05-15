@@ -41,11 +41,17 @@ spec:
           {{-  with .Values.celery.beat.command }}
           command: [ {{- . -}} ]
           {{- end }}
+          {{- if or .Values.envSecrets .Values.envConfigs }} 
           envFrom:
+            {{- if .Values.envSecrets }}
             - secretRef:
                 name: env-secrets
+            {{- end }}
+            {{- if .Values.envConfigs }}
             - configMapRef:
                 name: env-configmap
+            {{- end }}
+          {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       {{- with .Values.nodeSelector }}

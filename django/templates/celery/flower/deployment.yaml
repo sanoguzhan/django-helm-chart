@@ -42,17 +42,23 @@ spec:
           {{-  with .Values.celery.flower.command }}
           command: [ {{- . -}} ]
           {{- end }}
-          {{- .Values.celery.flower.service.port }}
+          {{- with .Values.celery.flower.service.port }}
           ports:
             - name: {{ .name }}
               containerPort: {{ .number }}
               protocol: TCP
           {{- end }}
+          {{- if or .Values.envSecrets .Values.envConfigs }} 
           envFrom:
+            {{- if .Values.envSecrets }}
             - secretRef:
                 name: env-secrets
+            {{- end }}
+            {{- if .Values.envConfigs }}
             - configMapRef:
                 name: env-configmap
+            {{- end }}
+          {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       {{- with .Values.nodeSelector }}
