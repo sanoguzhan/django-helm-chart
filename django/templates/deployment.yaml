@@ -28,21 +28,26 @@ spec:
       serviceAccountName: {{ include "django.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
-
       initContainers:
         - name: {{ .Values.init.migrations.name | quote }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           command: ["/bin/sh"]
-            args:
+          args:
               - -c
               - >-
                   {{ .Values.init.migrations.command }}
+          {{- if or .Values.envSecrets .Values.envConfigs }} 
           envFrom:
+            {{- if .Values.envSecrets }}
             - secretRef:
                 name: env-secrets
+            {{- end }}
+            {{- if .Values.envConfigs }}
             - configMapRef:
                 name: env-configmap
+            {{- end }}
+          {{- end }}
 
         - name: {{ .Values.init.staticfiles.name }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
@@ -52,11 +57,17 @@ spec:
               - -c
               - >-
                   {{ .Values.init.staticfiles.command }}
+          {{- if or .Values.envSecrets .Values.envConfigs }} 
           envFrom:
+            {{- if .Values.envSecrets }}
             - secretRef:
                 name: env-secrets
+            {{- end }}
+            {{- if .Values.envConfigs }}
             - configMapRef:
                 name: env-configmap
+            {{- end }}
+          {{- end }}
           volumeMounts:
             - name: shared
               mountPath: {{ .Values.data.staticfiles }}
@@ -67,21 +78,37 @@ spec:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: IfNotPresent
+          {{-  with .Values.command }}
+          command: [ {{- . -}} ]
+          {{- end }}
+          {{- if or .Values.envSecrets .Values.envConfigs }} 
+          envFrom:
+            {{- if .Values.envSecrets }}
+            - secretRef:
+                name: env-secrets
+            {{- end }}
+            {{- if .Values.envConfigs }}
+            - configMapRef:
+                name: env-configmap
+            {{- end }}
+          {{- end }}
           ports:
             - containerPort: 80
               protocol: TCP
-          {{- if .Values.probes.liveness.enabled }}
+        {{- with .Values.probes }}
+          {{- if .liveness.enabled }}
           livenessProbe:
             httpGet:
               path: {{ .liveness.path }}
-              port: {{ .Values.image.containerPort }}
+              port: {{ $.Values.image.containerPort }}
           {{- end }}
-          {{- if .Values.probes.readiness.enabled }}
+          {{- if .readiness.enabled }}
           readinessProbe:
             httpGet:
               path: {{ .readiness.path }}
-              port: {{ .Values.image.containerPort }}
+              port: {{ $.Values.image.containerPort }}
           {{- end }}
+        {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
 
