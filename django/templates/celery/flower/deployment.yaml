@@ -48,17 +48,7 @@ spec:
               containerPort: {{ .number }}
               protocol: TCP
           {{- end }}
-          {{- if or .Values.envSecrets .Values.envConfigs }} 
-          envFrom:
-            {{- if .Values.envSecrets }}
-            - secretRef:
-                name: env-secrets
-            {{- end }}
-            {{- if .Values.envConfigs }}
-            - configMapRef:
-                name: env-configmap
-            {{- end }}
-          {{- end }}
+          {{- include "djnago.envVariables" . | nindent 10 }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       {{- with .Values.nodeSelector }}

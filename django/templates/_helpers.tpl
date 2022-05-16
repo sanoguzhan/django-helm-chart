@@ -60,3 +60,17 @@ Create the name of the service account to use
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}
 {{- end }}
+
+{{- define "djnago.envVariables" -}}
+{{- if or .Values.envSecrets .Values.envConfigs }} 
+envFrom:
+{{- if .Values.envSecrets }}
+- secretRef:
+    name: env-secrets
+{{- end }}
+{{- if .Values.envConfigs }}
+- configMapRef:
+    name: env-configmap
+{{- end }}
+{{- end }}
+{{- end }}
