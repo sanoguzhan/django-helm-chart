@@ -5,9 +5,9 @@ metadata:
   namespace: {{ .Release.Namespace | default "default" }}
   labels:
       {{- include "django.labels" . | nindent 4 }}
-  spec:
+spec:
   type: {{ .Values.celery.flower.service.type }}
-  {{- .Values.celery.flower.service.port }}
+  {{- with .Values.celery.flower.service.port }}
   ports:
     - port: {{ .number }}
       targetPort: {{ .name }}
