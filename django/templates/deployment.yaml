@@ -79,7 +79,11 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: IfNotPresent
           {{-  with .Values.command }}
-          command: [ {{- . -}} ]
+          command: ["/bin/sh"]
+          args:
+              - -c
+              - >-
+                  {{ . }}
           {{- end }}
           {{- include "djnago.envVariables" . | nindent 10 }}
           ports:
