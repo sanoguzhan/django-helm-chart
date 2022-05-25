@@ -39,7 +39,11 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           {{-  with .Values.celery.worker.command }}
-          command: [ {{- . -}} ]
+          command: ["/bin/sh"]
+          args:
+              - -c
+              - >-
+                  {{ . }}
           {{- end }}
           {{- include "djnago.envVariables" . | nindent 10 }}
           resources:

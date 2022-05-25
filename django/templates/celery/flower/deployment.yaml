@@ -40,7 +40,11 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           {{-  with .Values.celery.flower.command }}
-          command: [ {{- . -}} ]
+          command: ["/bin/sh"]
+          args:
+              - -c
+              - >-
+                  {{ . }}
           {{- end }}
           {{- with .Values.celery.flower.service.port }}
           ports:
