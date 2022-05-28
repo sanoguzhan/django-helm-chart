@@ -14,3 +14,4 @@ spec:
   selector:
     app.kubernetes.io/name: {{ include "django.name" . }}
     app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: {{ include "django.fullname" . }}

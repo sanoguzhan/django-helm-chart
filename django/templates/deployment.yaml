@@ -20,6 +20,7 @@ spec:
       {{- end }}
       labels:
         {{- include "django.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: {{ include "django.fullname" . }}
     spec:
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
@@ -87,7 +88,7 @@ spec:
           {{- end }}
           {{- include "djnago.envVariables" . | nindent 10 }}
           ports:
-            - containerPort: 80
+            - containerPort: {{ .Values.image.containerPort }}
               protocol: TCP
         {{- with .Values.probes }}
           {{- if .liveness.enabled }}
@@ -118,9 +119,9 @@ spec:
               mountPath: /etc/caddy/Caddyfile
               subPath: Caddyfile
             - name: shared
-              mountPath: {{ .Values.data.staticfiles }}
+              mountPath: /srv/{{ .Values.data.staticfiles }}
             - name: shared
-              mountPath: {{ .Values.data.data_media }}
+              mountPath: /srv/{{ .Values.data.data_media }}
       volumes:
         - name: caddy-config
           configMap:
