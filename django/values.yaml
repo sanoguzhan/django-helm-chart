@@ -2,19 +2,146 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
+# Django Deployment Values
 replicaCount: 1
 revisionHistoryLimit: 2
-
 image:
-  repository: nginx
+  repository: ghcr.io/sanoguzhan/django-helm-test
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
-  tag: ""
-  containerPort: 8080
+  tag: "latest"
+  containerPort: 8081
+
+command: 'gunicorn blog.wsgi -b 0.0.0.0:8081'
+
+init:
+  migrations:
+    name: migrations
+    command:  "python3 manage.py migrate"
+  staticfiles:
+    name: staticfiles
+    command: "python3 manage.py collectstatic --noinput"
+
+#Django Static files and Media data folders
+# Set to path from working directory
+data:
+  staticfiles: "app/staticfiles/"
+  data_media: "app/data_media/"
+
+probes:
+  liveness:
+    enabled: true
+    path: /healthy
+  readiness:
+    enabled: true
+    path: /ready
 
 imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
+
+
+
+# Django Service Values
+service:
+  type: ClusterIP
+  port: 80
+
+#Caddy Settings ( Proxy Setup )
+proxy:
+  repository: caddy
+  pullPolicy: IfNotPresent
+  tag: "2.1.1-alpine" 
+  containerPort: 8000
+
+
+# Env ConfigMap values 
+envConfigs:
+ STATIC_ROOT: "staticfiles"
+ CELERY_BROKER_URL: ""
+
+# Enc Secret Values (Base64 encoded data)
+envSecrets: {}
+
+
+# Django Ingress Values 
+ingress:
+  enabled: true
+  annotations: {}
+  hosts:
+    - host: example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local
+
+
+celery:
+# Celery Beat Values
+  beat:
+    enabled: true
+    componentName: celery-beat
+    command: 'celery -A blog.celery beat -l DEBUG'
+    replicaCount: 1
+    strategy: Recreate
+# Celery Worker Settings  
+  worker:
+    componentName: celery-worker
+    command: 'celery -A blog.celery worker -l DEBUG'
+    replicaCount: 1
+    strategy: RollingUpdate
+# Celery Flower Settings
+  flower:
+    componentName: celery-flower
+    command: 'celery -A blog.celery flower'
+    replicaCount: 1
+    strategy: RollingUpdate   
+    service:
+      type: ClusterIP
+      port: 
+        number: 5555
+        name: flower
+    ingress:
+      enabled: false
+      annotations: {}
+      hosts:
+        - host: example.com
+          paths:
+            - path: / 
+              pathType: Prefix
+      tls: []  
+
+# Disable subchart by setting enabled value to false
+redis:
+  enabled: true
+  password: redis
+  master:
+    podSecurityContext:
+      enabled: true
+      fsGroup: 1001
+
+    containerSecurityContext:
+      enabled: true
+      runAsUser: 1001
+
+  replica:
+    podSecurityContext:
+      enabled: true
+      fsGroup: 1001
+
+    containerSecurityContext:
+      enabled: true
+      runAsUser: 1001
+
+  volumePermissions:
+    enabled: true
+    runAsUser: 1001
+
+
+
 
 serviceAccount:
   # Specifies whether a service account should be created
@@ -38,25 +165,6 @@ securityContext: {}
   # runAsNonRoot: true
   # runAsUser: 1000
 
-service:
-  type: ClusterIP
-  port: 80
-
-ingress:
-  enabled: false
-  className: ""
-  annotations: {}
-    # kubernetes.io/ingress.class: nginx
-    # kubernetes.io/tls-acme: "true"
-  hosts:
-    - host: chart-example.local
-      paths:
-        - path: /
-          pathType: ImplementationSpecific
-  tls: []
-  #  - secretName: chart-example-tls
-  #    hosts:
-  #      - chart-example.local
 
 resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious
@@ -75,7 +183,7 @@ autoscaling:
   minReplicas: 1
   maxReplicas: 100
   targetCPUUtilizationPercentage: 80
-  # targetMemoryUtilizationPercentage: 80
+  targetMemoryUtilizationPercentage: 80
 
 nodeSelector: {}
 
@@ -83,70 +191,13 @@ tolerations: []
 
 affinity: {}
 
-init:
-  migrations:
-    name: Migrations
-    command:  "python3 manage.py migrate"
-  staticfiles:
-    name: "Collect Static Files"
-    command: "python3 manage.py collectstatic --noinput"
+
   
-#Django Static files and Media data folders
-data:
-  staticfiles: ""
-  data_media: ""
-
-envConfigs: {}
-
-#Base64 encoded data
-envSecrets: {}
-
-#Caddy Settings
-proxy:
-  repository: caddy
-  pullPolicy: IfNotPresent
-  tag: "2.1.1-alpine" 
-  containerPort: 80
-
-probe:
-  liveness:
-    enabled: true
-    path: /
-  readiness:
-    enabled: true
-    path: /
 
 
-celery:
-# Beat Settings
-  beat:
-    componentName: celery-beat
-    command: ''
-    replicaCount: 1
-    strategy: Recreate
-# Worker Settings  
-  worker:
-    componentName: celery-worker
-    command: ''
-    replicaCount: 1
-    strategy: RollingUpdate
-# Flower Settings
-  flower:
-    componentName: celery-flower
-    command: ''
-    replicaCount: 1
-    strategy: RollingUpdate   
-    service:
-      type: ClusterIP
-      port: 
-        number: 5555
-        name: flower
-    ingress:
-      enabled: true
-      annotations: {}
-      hosts:
-        - host: ''
-          paths:
-            - path: / 
-              pathType: Prefix
-      tls: []  
+
+
+
+
+
+
