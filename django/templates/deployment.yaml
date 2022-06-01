@@ -86,7 +86,7 @@ spec:
               - >-
                   {{ . }}
           {{- end }}
-          {{- include "djnago.envVariables" . | nindent 10 }}
+          {{- include "django.envVariables" . | nindent 10 }}
           ports:
             - containerPort: {{ .Values.image.containerPort }}
               protocol: TCP
