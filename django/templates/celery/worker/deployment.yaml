@@ -45,7 +45,7 @@ spec:
               - >-
                   {{ . }}
           {{- end }}
-          {{- include "djnago.envVariables" . | nindent 10 }}
+          {{- include "django.envVariables" . | nindent 10 }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       {{- with .Values.nodeSelector }}
