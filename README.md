@@ -32,19 +32,16 @@ command: 'gunicorn blog.wsgi -b 0.0.0.0:8081'
 ```
 
 _Note:_ Set the command as a string instead of a list.
-## Init Container
+## Static Files
 
-- **migrations:** Add command to apply migrations before container is created.
+Static files collect is done by initContainers.
 - **staticfiles:** Add command for Django to collect static files.
 
 ```yaml
-init:
-  migrations:
-    name: migrations
-    command:  "python3 manage.py migrate"
-  staticfiles:
-    name: staticfiles
-    command: "python3 manage.py collectstatic --noinput"
+collect_static:
+  enabled: false
+  name: staticfiles
+  command: "python3 manage.py collectstatic --noinput"
 ```
 
 Static files and Media directories should be given under data:
@@ -58,6 +55,20 @@ data:
 Paths should be relative to the working directory of main container.
 Static files are shared volume (emptyDir) between initContainer and Proxy container.
 
+
+## Migrations
+
+Migrations are done with a Job. ServiceAccount, configMap and secret values are loaded before application container starts. Job is deleted after completion.
+
+```yaml
+db_migrations:
+  enabled: true
+  name: db-migration
+  command: "python3 manage.py migrate --noinput"
+  resources: {}
+  safeToEvict: true
+
+```
 
 ## ConfigMaps and Secrets
 
