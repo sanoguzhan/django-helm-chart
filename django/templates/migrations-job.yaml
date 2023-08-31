@@ -1,0 +1,52 @@
+{{- if .Values.db_migrations.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "django.fullname" . }}-db-migrations
+  labels:
+    {{- include "django.labels" . | nindent 4 }}
+  annotations:
+    helm.sh/hook: pre-install,pre-upgrade
+    helm.sh/hook-delete-policy: hook-succeeded
+    {{- if .Values.db_migrations.annotations }}
+    {{- toYaml .Values.db_migrations.annotations | nindent 4 }}
+    {{- end }}
+spec:
+  template:
+    metadata:
+      annotations:
+        {{- if .Values.db_migrations.safeToEvict }}
+        cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
+        {{- end }}
+      labels:
+        {{- include "django.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: {{ include "django.fullname" . }}
+    spec:
+      restartPolicy: OnFailure
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "django.serviceAccountName" . }}
+      containers:
+        - name: {{ .Values.db_migrations.name | default "db-migrations" | quote}}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          resources:
+            {{- toYaml .Values.db_migrations.resources | nindent 12 }}
+          command: ["/bin/sh"]
+          args:
+              - -c
+              - >-
+                  {{ .Values.db_migrations.command }}
+          {{- if or .Values.envSecrets .Values.envConfigs }} 
+          envFrom:
+            {{- if .Values.envSecrets }}
+            - secretRef:
+                name: env-secrets
+            {{- end }}
+            {{- if .Values.envConfigs }}
+            - configMapRef:
+                name: env-configmap
+            {{- end }}
+          {{- end }}
+{{- end }}
