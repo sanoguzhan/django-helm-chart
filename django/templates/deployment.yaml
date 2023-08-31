@@ -29,35 +29,16 @@ spec:
       serviceAccountName: {{ include "django.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      {{ if .Values.collect_static.enabled }}
       initContainers:
-        - name: {{ .Values.init.migrations.name | quote }}
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
-          command: ["/bin/sh"]
-          args:
-              - -c
-              - >-
-                  {{ .Values.init.migrations.command }}
-          {{- if or .Values.envSecrets .Values.envConfigs }} 
-          envFrom:
-            {{- if .Values.envSecrets }}
-            - secretRef:
-                name: env-secrets
-            {{- end }}
-            {{- if .Values.envConfigs }}
-            - configMapRef:
-                name: env-configmap
-            {{- end }}
-          {{- end }}
-
-        - name: {{ .Values.init.staticfiles.name }}
+        - name: {{ .Values.collect_static.name | quote }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: IfNotPresent
           command: ["/bin/sh"]
           args:
               - -c
               - >-
-                  {{ .Values.init.staticfiles.command }}
+                  {{ .Values.collect_static.command }}
           {{- if or .Values.envSecrets .Values.envConfigs }} 
           envFrom:
             {{- if .Values.envSecrets }}
@@ -72,7 +53,7 @@ spec:
           volumeMounts:
             - name: shared
               mountPath: {{ .Values.data.staticfiles }}
-
+      {{- end }}
       containers:
         - name: {{ .Chart.Name }}
           securityContext:

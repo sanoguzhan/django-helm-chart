@@ -14,13 +14,21 @@ image:
 
 command: 'gunicorn blog.wsgi -b 0.0.0.0:8081'
 
-init:
-  migrations:
-    name: migrations
-    command:  "python3 manage.py migrate"
-  staticfiles:
-    name: staticfiles
-    command: "python3 manage.py collectstatic --noinput"
+
+# Django Deployment Settings
+# Init Container to collect static files
+collect_static:
+  enabled: false
+  name: staticfiles
+  command: "python3 manage.py collectstatic --noinput"
+
+# Job to run database migrations
+db_migrations:
+  enabled: true
+  name: db-migration
+  command: "python3 manage.py migrate --noinput"
+  resources: {}
+  safeToEvict: true
 
 #Django Static files and Media data folders
 # Set to path from working directory
